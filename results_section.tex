@@ -1,0 +1,172 @@
+\section{Results}
+
+This section reports the empirical outcomes of the end-to-end fraud detection pipeline implemented in \texttt{fraud-with-SMOTE.ipynb}. Results are presented in the CRISP-DM style requested (data understanding through deployment) and are grounded in the validation-set evaluation produced by the notebook.
+
+\subsection{Data Understanding}
+
+The dataset contains 95,662 labeled mobile money transactions (21 columns including the target) and a separate 45,019-row unlabeled test set used for final scoring. The fraud class is extremely rare: 193 transactions (0.202\%) are labeled as fraud, while 95,469 (99.798\%) are legitimate. This imbalance motivates the use of metrics that focus on the positive class (precision--recall) and imbalance-aware training strategies.
+
+\begin{table}[ht]
+\centering
+\caption{Dataset summary and class distribution (training data)}
+\label{tab:data_summary}
+\begin{tabular}{lrr}
+\hline
+\textbf{Item} & \textbf{Count} & \textbf{Percent} \\
+\hline
+Total training transactions & 95,662 & 100.000\% \\
+Legitimate (FraudResult = 0) & 95,469 & 99.798\% \\
+Fraud (FraudResult = 1) & 193 & 0.202\% \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.72\linewidth]{figs/class_distribution.png}
+\caption{Class distribution in the training dataset showing severe imbalance.}
+\label{fig:class_distribution}
+\end{figure}
+
+\subsection{Data Preparation}
+
+Data quality checks confirmed that the training data contained no missing values and no duplicate transaction identifiers. A stratified 80/20 split was used to construct a training subset (76,529 rows) and validation subset (19,133 rows), preserving the fraud prevalence.
+
+Feature preparation followed the notebook implementation:
+\begin{itemize}
+    \item \textbf{Feature engineering}: interaction and stability features were added, including \textit{Amount--Value} ratio/difference/interaction, log transforms, and temporal flags (weekend, business hour, late night).
+    \item \textbf{Account aggregation}: account-level behavioral statistics (e.g., transaction count, mean, standard deviation, min/max, and amount range) were computed to capture deviations from typical user behavior.
+    \item \textbf{Scaling}: \texttt{StandardScaler} was applied for linear models (Logistic Regression and LinearSVC), while tree-based models were trained on the unscaled features.
+\end{itemize}
+
+The final best-performing LightGBM configuration used a 17-feature set (Figure \ref{fig:feature_importance}) combining monetary, temporal, and account-history attributes.
+
+\subsection{Exploratory Data Analytics}
+
+Exploratory analysis highlighted a strongly skewed monetary distribution and clear distribution shift between legitimate and fraudulent transactions in transformed space. Figure \ref{fig:amount_value_distributions} summarizes the separation in log-transformed monetary variables, supporting the inclusion of logarithmic and interaction features.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/amount_value_distributions.png}
+\caption{Distribution of monetary features after log transformation: fraud transactions concentrate differently than legitimate transactions, enabling separation by non-linear models.}
+\label{fig:amount_value_distributions}
+\end{figure}
+
+\subsection{Machine Learning Modeling}
+
+Five models were trained and compared:
+\textbf{LightGBM}, \textbf{Random Forest}, \textbf{XGBoost}, \textbf{Logistic Regression}, and \textbf{LinearSVC}. For the baseline comparison, models were trained with imbalance handling (\texttt{class\_weight='balanced'} for scikit-learn models, and \texttt{scale\_pos\_weight} for XGBoost) and evaluated on the validation split using the default threshold (0.5).
+
+\subsection{Performance Evaluation}
+
+Given the 0.2\% fraud rate, performance was assessed using ROC-AUC, PR-AUC, and F1-score (Table \ref{tab:initial_comparison}). PR-AUC is emphasized because it directly measures performance on the minority (fraud) class.
+
+\begin{table}[ht]
+\centering
+\caption{Initial model comparison on the validation set (default threshold = 0.5)}
+\label{tab:initial_comparison}
+\begin{tabular}{lccc}
+\hline
+\textbf{Model} & \textbf{ROC-AUC} & \textbf{PR-AUC} & \textbf{F1} \\
+\hline
+LightGBM & 0.9784 & \textbf{0.9273} & 0.7907 \\
+Random Forest & \textbf{0.9997} & 0.9020 & \textbf{0.7952} \\
+XGBoost & 0.9988 & 0.5469 & 0.5564 \\
+Logistic Regression & 0.9988 & 0.5885 & 0.3439 \\
+LinearSVC & 0.9987 & 0.5972 & 0.3333 \\
+\hline
+\end{tabular}
+\end{table}
+
+LightGBM achieved the strongest PR-AUC (0.9273), indicating the most favorable precision--recall behavior under extreme class imbalance. While Random Forest achieved a slightly higher F1 at the default threshold, its PR-AUC was lower, implying weaker performance across operating points.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/best_model_curves.png}
+\caption{ROC and precision--recall curves for the best baseline model (LightGBM) on the validation split.}
+\label{fig:best_model_curves}
+\end{figure}
+
+\subsection{Optimization}
+
+Two optimizations were evaluated: (i) decision-threshold tuning and (ii) training-set rebalancing via SMOTE.
+
+\subsubsection{Threshold Optimization}
+
+The classification threshold was optimized on the validation set using the precision--recall curve (maximizing F1). For LightGBM, the optimal threshold was unusually high (0.9964), reflecting that the model produces extremely confident fraud scores for a small subset of transactions.
+
+\begin{table}[ht]
+\centering
+\caption{Optimized-threshold performance on validation (F1-optimal threshold per model)}
+\label{tab:optimized_thresholds}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Model} & \textbf{Threshold} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{PR-AUC} \\
+\hline
+LightGBM & 0.9964 & \textbf{0.9067} & 0.9444 & 0.8718 & 0.9273 \\
+Random Forest & 0.7000 & 0.8800 & 0.9167 & 0.8462 & 0.9023 \\
+XGBoost & 0.9947 & 0.6154 & 0.4923 & 0.8205 & 0.5520 \\
+\hline
+\end{tabular}
+\end{table}
+
+For LightGBM, threshold tuning increased F1 from 0.7907 (at 0.5) to 0.9067 (+14.7\% relative improvement), while maintaining high precision (0.9444) and recall (0.8718). Figure \ref{fig:threshold_optimization} visualizes the precision--recall trade-off and the F1 peak.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/threshold_optimization.png}
+\caption{Threshold optimization for LightGBM on the validation split. The F1 optimum occurs at a high threshold, producing a conservative but high-confidence fraud shortlist.}
+\label{fig:threshold_optimization}
+\end{figure}
+
+\subsubsection{SMOTE Integration}
+
+SMOTE was applied to the scaled training subset, transforming the training distribution from 76,529 samples with 154 fraud cases to a balanced synthetic dataset (152,750 samples, 50/50 class balance). Table \ref{tab:smote_comparison} shows the combined comparison between class-weighted training and SMOTE-based training.
+
+\begin{table}[ht]
+\centering
+\caption{Master comparison: class-weighting vs. SMOTE (validation performance)}
+\label{tab:smote_comparison}
+\begin{tabular}{llccccc}
+\hline
+\textbf{Model} & \textbf{Technique} & \textbf{PR-AUC} & \textbf{F1} & \textbf{Recall} & \textbf{Precision} & \textbf{Threshold} \\
+\hline
+XGBoost & SMOTE & \textbf{0.9411} & 0.8831 & 0.8718 & 0.8947 & 0.9402 \\
+LightGBM & SMOTE & 0.9318 & 0.8800 & 0.8462 & 0.9167 & 0.9543 \\
+Random Forest & SMOTE & 0.9298 & 0.8919 & 0.8462 & 0.9429 & 0.8900 \\
+LightGBM & Class Weight & 0.9273 & \textbf{0.9067} & 0.8718 & 0.9444 & 0.9964 \\
+Random Forest & Class Weight & 0.9023 & 0.8800 & 0.8462 & 0.9167 & 0.7000 \\
+\hline
+\end{tabular}
+\end{table}
+
+SMOTE improved PR-AUC for gradient boosting (XGBoost achieved 0.9411, the highest PR-AUC observed), indicating better ranking and retrieval of the minority class across thresholds. However, the class-weighted LightGBM achieved the strongest F1 after threshold tuning (0.9067), making it a strong candidate for operational settings where a balanced precision--recall trade-off is desired.
+
+\subsection{Deployment}
+
+For final scoring, the selected model was retrained on the full labeled dataset (training + validation) and used to score the 45,019-row test set. The optimized threshold was applied to convert probabilities into binary predictions and generate the submission file (\texttt{submission\_optimized.csv}).
+
+To support operational use, the same scoring logic can be executed in an interactive interface (\texttt{app.py}) and in a lightweight real-time simulation loop (\texttt{simulate\_real\_time.py}), enabling probability-based decisions and threshold-driven routing.
+
+\begin{table}[ht]
+\centering
+\caption{Effect of optimized threshold on test-set fraud flagging (final model)}
+\label{tab:test_flagging}
+\begin{tabular}{lrr}
+\hline
+\textbf{Thresholding} & \textbf{Predicted fraud count} & \textbf{Predicted fraud rate} \\
+\hline
+Default (0.50) & 82 & 0.182\% \\
+Optimized ($\approx$1.00) & 53 & 0.118\% \\
+\hline
+\end{tabular}
+\end{table}
+
+Applying the optimized threshold changed the predicted label for 29 test transactions, producing a smaller and higher-confidence review queue. This behavior supports a practical tiered-decision deployment: high-score transactions can be blocked or escalated immediately, while mid-score cases can be routed to manual review.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/feature_importance.png}
+\caption{Feature importance for the best LightGBM configuration. Monetary variables (Amount, Value) and account-history aggregates dominate, with temporal flags providing additional signal.}
+\label{fig:feature_importance}
+\end{figure}

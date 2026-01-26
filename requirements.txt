@@ -5,3 +5,7 @@ joblib
 lightgbm
 plotly
 scikit-learn
+matplotlib
+seaborn
+xgboost
+imbalanced-learn
