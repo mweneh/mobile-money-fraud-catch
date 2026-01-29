@@ -1,0 +1,278 @@
+%\documentclass[a4paper,fleqn,longmktitle]{cas-sc}
+\documentclass[a4paper,fleqn]{cas-sc}
+
+% \usepackage[numbers]{natbib}
+%\usepackage[authoryear]{natbib}
+\usepackage[authoryear,longnamesfirst]{natbib}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+\tcbuselibrary{theorems}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+
+
+%%%Author definitions
+\def\tsc#1{\csdef{#1}{\textsc{\lowercase{#1}}\xspace}}
+\tsc{WGM}
+\tsc{QE}
+\tsc{EP}
+\tsc{PMS}
+\tsc{BEC}
+\tsc{DE}
+%%%
+
+% Uncomment and use as needed
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newdefinition{rmk}{Remark}
+%\newproof{pf}{Proof}
+%\newproof{pot}{Proof of Theorem \ref{thm}}
+
+\begin{document}
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+% Short title
+\shorttitle{Mobile Money Fraud Detection}
+
+% Short author
+% \shortauthors{ Ongaro,M.}
+
+% Main title of the paper
+\title [mode = title]{Mobile Money Fraud Detection Using Machine Learning: A CRISP-DM Approach}                      
+% Title footnote mark
+% eg: \tnotemark[1]
+\tnotemark[1,2]
+
+% Title footnote 1.
+% eg: \tnotetext[1]{Title footnote text}
+% \tnotetext[<tnote number>]{<tnote text>} 
+
+
+
+% First author
+%
+% Options: Use if required
+% eg: \author[1,3]{Author Name}[type=editor,
+%       style=chinese,
+%       auid=000,
+%       bioid=1,
+%       prefix=Sir,
+%       orcid=0000-0000-0000-0000,
+%       facebook=<facebook id>,
+%       twitter=<twitter id>,
+%       linkedin=<linkedin id>,
+%       gplus=<gplus id>]
+% \author[1]{David Ongaro M.E}[type=editor,
+%                         auid=000,bioid=1,
+%                         prefix=Mr,
+%                         role=Researcher]
+% Corresponding author indication
+
+% Footnote of the first author
+\fnmark[1]
+
+% Email ID of the first author
+% \ead{david.mauti@strathmore.edu}
+
+% URL of the first author
+% \ead[url]{www.cvr.cc, cvr@sayahna.org}
+
+%  Credit authorship
+% \credit{Conceptualisation of this study, Methodology, Software}
+
+% Address/affiliation
+% \affiliation[3]{organization={Strathmore University},
+%     addressline={Ole Sangale}, 
+%     city={Nairobi},
+%     % citysep={}, % Uncomment if no comma needed between city and postcode
+%     state={Nairobi},
+%     country={Kenya}}
+
+
+% For a title note without a number/mark
+
+
+\section{Results}
+This section presents the experimental results from training and evaluating machine learning algorithms on the mobile money fraud detection task. The analysis utilized a dataset of mobile money transactions that was processed and divided into training, validation, and testing sets to ensure robust model evaluation.
+
+\subsection{Data Understanding}
+
+As shown in Table~\ref{tab:dataset_distribution}, the dataset exhibited severe class imbalance, with fraudulent transactions representing approximately 0.2\% of all labeled cases. Out of 95,662 entries contained in the training set, 95,469 were legitimate (class 0) and 193 were fraudulent (class 1), yielding a fraud rate of 0.202\%. The validation set, created through a stratified 80-20 split to preserve minority class distribution, comprised 23,916 transactions with 23,868 legitimate cases and 48 fraudulent cases (0.201\% fraud rate). The test set included 45,019 unlabeled transactions reserved for final model evaluation.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.72\linewidth]{figs/class-distribution.png}
+\caption{Class distribution in the training dataset showing severe imbalance.}
+\label{fig:class_distribution}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\textwidth]{figs/daily.png}
+\caption{Temporal analysis showing peak fraud propensities during late evening hours.}
+\label{fig:daily}
+\end{figure}
+
+
+\begin{table}[h]
+\centering
+\caption{Dataset Distribution and Class Imbalance}
+\label{tab:dataset_distribution}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Dataset Partition} & \textbf{Total} & \textbf{Legitimate} & \textbf{Fraudulent} & \textbf{Fraud Rate} \\
+                           & \textbf{Transactions} & \textbf{(Class 0)} & \textbf{(Class 1)} & \textbf{(\%)} \\
+\midrule
+Training Set   & 95,662 & 95,469 & 193 & 0.202\% \\
+Validation Set & 23,916 & 23,868 & 48  & 0.201\% \\
+Test Set       & 45,019 & (Unlabeled) & (Unlabeled) & N/A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+
+\subsection{Data Preparation; Experimental Setup}
+Data quality checks confirmed that the training data contained no missing values and no duplicate transaction identifiers. To ensure robustness and generalizability of results, all models were trained using 5-fold stratified cross-validation. To get the best out of our data, we engineered features from interactions, ratios and temporal flags. Additionally, account-level behavioral statistics were computed to capture deviations from typical user behavior. Finally, scaling was applied using StandardScaler for linear models such as Logistic Regression. We configured our algorithms to assign higher misclassification penalties to fraud cases through class weighting. This configuration forces the models to focus on the minority class during training, essentially telling them that missing fraud is more costly than misclassifying the occasional legitimate transaction. Common class weighting strategies such as (\texttt{class\_weight='balanced'} and \texttt{scale\_pos\_weight})were employed to address the severe class imbalance challenge. Hyperparameters for the LightGBM model were tuned using random Search, resulting in the following optimal configuration: \texttt{learning\_rate=0.01}, \texttt{n\_estimators=700}, \texttt{num\_leaves=50}, and \texttt{subsample=0.9}.
+
+\subsection{Exploratory Data Analytics}
+
+Exploratory analysis highlighted a strongly skewed monetary distribution and clear distribution shift between legitimate and fraudulent transactions in transformed space. Figure \ref{fig:amount_value_distributions} summarizes the separation in log-transformed monetary variables, supporting the inclusion of logarithmic and interaction features. Furthermore, the analysis revealed distinct behavioral patterns differentiating fraudulent from legitimate transactions. For instance, temporal analysis in Figure~\ref{fig:hourly} demonstrated that fraudulent activity exhibited peaks occurring during late-night hours in contrast to the daytime peaks observed for legitimate transactions. Additionally, the distribution of transaction amounts showed that fraudulent transactions tended to cluster around specific high-value outliers, whereas legitimate payments followed a log-normal distribution pattern. From Figure~\ref{fig:daily}, our analysis showed varied fraud activities on different days of the month peaking at January 10th, 2024.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/hourly.png}
+\caption{Distribution of temporal features showing fraud by the hour of the day}
+\label{fig:hourly}
+\end{figure}
+
+\subsection{Machine Learning Modeling}
+
+Five models were trained and compared:
+\textbf{LightGBM}, \textbf{Random Forest}, \textbf{XGBoost}, \textbf{Logistic Regression}, and \textbf{LinearSVC}. For the baseline comparison, models were trained with imbalance handling (\texttt{class\_weight='balanced'} for scikit-learn models, and \texttt{scale\_pos\_weight} for XGBoost) and evaluated on the validation split using the default threshold (0.5).
+Table~\ref{tab:initial_comparison} presents the performance metrics for five machine learning algorithms. The models were evaluated using a default classification threshold of 0.5 on the validation data. Due to the highly imbalanced nature of our data, the Area Under the Precision-Recall Curve (PR-AUC) was selected as the primary metric for model selection.
+
+\begin{table}[ht]
+\centering
+\caption{Initial Model Comparison Summary (Default Threshold = 0.5)}
+\label{tab:initial_comparison}
+\begin{tabular}{lccc}
+\hline
+\textbf{Model} & \textbf{ROC-AUC} & \textbf{PR-AUC} & \textbf{F1-Score} \\
+\hline
+LightGBM    &  0.9784  & \textbf {0.9273} & 0.7907\\
+Random Forest      &      \textbf  {0.9997}   &  0.9020  &   \textbf  {0.7952} \\
+LinearSVC         &       0.9987   &  0.5972    & 0.3333\\
+Logistic Regression   &  0.9988   &  0.5885    & 0.3439 \\
+XGBoost          &    0.9988   &  0.5469    & 0.5564 \\
+\hline
+\end{tabular}
+\end{table}
+
+LightGBM achieved the strongest PR-AUC (0.9273), indicating the most favorable precision--recall behavior under extreme class imbalance. While Random Forest achieved a slightly higher F1 at the default threshold, its PR-AUC was lower, implying weaker performance across operating points. XGBoost yielded a ROC-AUC of 0.9988 but showed notably lower PR-AUC (0.5469), with an F1-score of 0.3455, precision of 0.2115, and recall of 0.9583. Logistic Regression achieved the highest ROC-AUC (0.9974) but demonstrated moderate PR-AUC (0.6132), with F1-score of 0.5564 and recall of 0.9167.
+Despite LightGBM's superior overall performance metrics, the baseline F1-score of 0.7907 indicated a high false positive rate at the default threshold, necessitating threshold optimization to improve practical deployment viability.
+
+\subsection{Threshold Optimization }
+
+We conducted a Precision-Recall Curve analysis to identify the optimal decision threshold that maximizes F1. In the optimisation process, trade-offs between precision and recall were analysed across the full range of probability scores. For LightGBM, our optimization process yielded substantial performance improvements when adjusting from the default threshold of 0.50 to an optimal threshold of 1.00. The threshold adjustment resulted in a 69\% increment of the model's F1-score from 0.5224 to 0.8800. Subsequently, the new threshold led to a 171\% improvement of precision from 0.3684 to approximately 1.0000, and a modest recall decrease from 0.8974 to 0.7850. Notably, an optimal threshold of 1.00 represents a strict high-confidence boundary where precision estimates approach unity for a small subset of transactions. Such a high confidence levels indicate that the LightGBM model not only achieves near-zero false positives but also maintains acceptable recall levels. Figure \ref{fig:threshold_optimization} illustrates that while recall decreases slightly at higher thresholds, precision increases dramatically, driving the maximized F1-score.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/amount_value_distributions.png}
+\caption{Distribution of monetary features after log transformation: fraud transactions concentrate differently than legitimate transactions, enabling separation by non-linear models.}
+\label{fig:amount_value_distributions}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\caption{Optimized-threshold performance on validation (F1-optimal threshold per model)}
+\label{tab:optimized_thresholds}
+\begin{tabular}{lccccc}
+\hline
+\textbf{Model} & \textbf{Threshold} & \textbf{F1} & \textbf{Precision} & \textbf{Recall} & \textbf{PR-AUC} \\
+\hline
+LightGBM & 0.9964 & \textbf{0.9067} & 0.9444 & 0.8718 & 0.9273 \\
+Random Forest & 0.7000 & 0.8800 & 0.9167 & 0.8462 & 0.9023 \\
+XGBoost & 0.9947 & 0.6154 & 0.4923 & 0.8205 & 0.5520 \\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=\linewidth]{figs/threshold_optimization.png}
+\caption{Threshold optimization for LightGBM on the validation split. The F1 optimum occurs at a high threshold, producing a conservative but high-confidence fraud shortlist.}
+\label{fig:threshold_optimization}
+\end{figure}
+
+\subsubsection{SMOTE Integration}
+
+To achieve training-set rebalancing,  SMOTE was applied to the scaled training subset, transforming the training distribution from 76,529 samples with 154 fraud cases to a balanced synthetic dataset (152,750 samples, 50/50 class balance). Table \ref{tab:smote_comparison} shows the combined comparison between class-weighted training and SMOTE-based training.
+
+\begin{table}[ht]
+\centering
+\caption{Master comparison: class-weighting vs. SMOTE (validation performance)}
+\label{tab:smote_comparison}
+\begin{tabular}{llccccc}
+\hline
+\textbf{Model} & \textbf{Technique} & \textbf{PR-AUC} & \textbf{F1} & \textbf{Recall} & \textbf{Precision} & \textbf{Threshold} \\
+\hline
+XGBoost & SMOTE & \textbf{0.9411} & 0.8831 & 0.8718 & 0.8947 & 0.9402 \\
+LightGBM & SMOTE & 0.9318 & 0.8800 & 0.8462 & 0.9167 & 0.9543 \\
+Random Forest & SMOTE & 0.9298 & 0.8919 & 0.8462 & 0.9429 & 0.8900 \\
+LightGBM & Class Weight & 0.9273 & \textbf{0.9067} & 0.8718 & 0.9444 & 0.9964 \\
+Random Forest & Class Weight & 0.9023 & 0.8800 & 0.8462 & 0.9167 & 0.7000 \\
+\hline
+\end{tabular}
+\end{table}
+
+SMOTE improved PR-AUC for gradient boosting (XGBoost achieved 0.9411, the highest PR-AUC observed), indicating better ranking and retrieval of the minority class across thresholds. However, the class-weighted LightGBM achieved the strongest F1 after threshold tuning (0.9067), making it a strong candidate for operational settings where a balanced precision--recall trade-off is desired.
+
+\subsection{Feature Importance}
+Feature importance analysis (Figure~\ref{fig:feature-importance}) from the LightGBM model shows that Amount is by far the most influential predictor, highlighting transaction size as the primary driver of model decisions, followed by Value, which also contributes substantially. A second tier of importance is dominated by account-level behavioral features such as $ Account_TxnCount Account_StdAmount, Account_AvgAmount, Account_MinAmount, and Account_MaxAmount, $ indicating that deviations from an account’s typical transaction patterns are critical for identifying anomalous activity. Transformed variables such as LogAmount further reinforce the role of transaction magnitude across scales. Temporal indicators including IsBusinessHour and IsWeekend, along with contextual features such as PricingStrategy provide additional but comparatively weaker predictive power, suggesting that while timing and pricing context matter, the model relies primarily on monetary characteristics and historical account behavior.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.8\textwidth]{figs/feature-importance.png}
+\caption{Feature Importance Rankings for Fraud Detection. The chart illustrates the relative contribution of each feature to the LightGBM model's predictive performance. Amount dominates with the highest importance score}
+\label{fig:feature-importance}
+\end{figure}
+\printcredits
+\subsection{Final Model Evaluation and Deployment}
+
+The optimised LightGBM model was retrained on the full training dataset and applied to the unseen Test Set ($n=45{,}019$). Table~\ref{tab:test_predictions} summarises the prediction distribution.
+\begin{table}[htbp]
+\centering
+\caption{Test Set Prediction Statistics}
+\label{tab:test_predictions}
+\begin{threeparttable}
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Threshold Strategy} & \textbf{Predicted} & \textbf{Prediction} & \textbf{Estimated False} \\
+                            & \textbf{Frauds} & \textbf{Rate (\%)} & \textbf{Positives}\tnote{*} \\
+\midrule
+Default (0.50)              & 82  & 0.182\% & $\sim$160 (High) \\
+\textbf{Optimal (1.00)}     & \textbf{53} & \textbf{0.118\%} & \textbf{$\sim$0 (Low)} \\
+\bottomrule
+\end{tabular}
+\begin{tablenotes}
+\item[*] Estimated based on the historical fraud rate of 0.20\%.
+\end{tablenotes}
+\end{threeparttable}
+\end{table}
+The final model identified \textbf{53 high-risk transactions}, representing 0.118\% of the test volume. This new rate closely aligns with the training fraud rate of 0.2\%, suggesting excellent calibration. Additionally, the final model achieves a significant reduction in type I errors (false positives).To support operational use, the same scoring logic can be executed in an interactive interface (\texttt{app.py}) and in a lightweight real-time simulation loop (\texttt{simulate\_real\_time.py}), enabling probability-based decisions and threshold-driven routing.
+
+\printcredits
+
+%% Loading bibliography style file
+% \bibliographystyle{model1-num-names}
+\bibliographystyle{cas-model2-names}
+
+% Loading bibliography database
+\bibliography{references.bib}
+
+
+
+\end{document}

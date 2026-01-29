@@ -1,0 +1,432 @@
+%% 
+%% Copyright 2019-2020 Elsevier Ltd
+%% 
+%% This file is part of the 'CAS Bundle'.
+%% --------------------------------------
+%% 
+%% It may be distributed under the conditions of the LaTeX Project Public
+%% License, either version 1.2 of this license or (at your option) any
+%% later version. The latest version of this license is in
+%%    http://www.latex-project.org/lppl.txt
+%% and version 1.2 or later is part of all distributions of LaTeX
+%% version 1999/12/01 or later.
+%% 
+%% The list of all files belonging to the 'CAS Bundle' is
+%% given in the file `manifest.txt'.
+%% 
+%% Template article for cas-sc documentclass for 
+%% double column output.
+
+%\documentclass[a4paper,fleqn,longmktitle]{cas-sc}
+\documentclass[a4paper,fleqn]{cas-sc}
+
+% \usepackage[numbers]{natbib}
+%\usepackage[authoryear]{natbib}
+\usepackage[authoryear,longnamesfirst]{natbib}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+\tcbuselibrary{theorems}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{wrapfig}
+
+
+%%%Author definitions
+\def\tsc#1{\csdef{#1}{\textsc{\lowercase{#1}}\xspace}}
+\tsc{WGM}
+\tsc{QE}
+\tsc{EP}
+\tsc{PMS}
+\tsc{BEC}
+\tsc{DE}
+%%%
+
+% Uncomment and use as needed
+%\newtheorem{theorem}{Theorem}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newdefinition{rmk}{Remark}
+%\newproof{pf}{Proof}
+%\newproof{pot}{Proof of Theorem \ref{thm}}
+
+\begin{document}
+\let\WriteBookmarks\relax
+\def\floatpagepagefraction{1}
+\def\textpagefraction{.001}
+
+% Short title
+\shorttitle{Mobile Money Fraud Detection}
+
+% Short author
+\shortauthors{ Ongaro,M.}
+
+% Main title of the paper
+\title [mode = title]{Mobile Money Fraud Detection Using Machine Learning: A CRISP-DM Approach}                      
+% Title footnote mark
+% eg: \tnotemark[1]
+\tnotemark[1,2]
+
+% Title footnote 1.
+% eg: \tnotetext[1]{Title footnote text}
+% \tnotetext[<tnote number>]{<tnote text>} 
+
+
+
+% First author
+%
+% Options: Use if required
+% eg: \author[1,3]{Author Name}[type=editor,
+%       style=chinese,
+%       auid=000,
+%       bioid=1,
+%       prefix=Sir,
+%       orcid=0000-0000-0000-0000,
+%       facebook=<facebook id>,
+%       twitter=<twitter id>,
+%       linkedin=<linkedin id>,
+%       gplus=<gplus id>]
+\author[1]{David Ongaro M.E}[type=editor,
+                        auid=000,bioid=1,
+                        prefix=Mr,
+                        role=Researcher]
+% Corresponding author indication
+
+% Footnote of the first author
+\fnmark[1]
+
+% Email ID of the first author
+\ead{david.mauti@strathmore.edu}
+
+% URL of the first author
+% \ead[url]{www.cvr.cc, cvr@sayahna.org}
+
+%  Credit authorship
+% \credit{Conceptualisation of this study, Methodology, Software}
+
+% Address/affiliation
+\affiliation[3]{organization={Strathmore University},
+    addressline={Ole Sangale}, 
+    city={Nairobi},
+    % citysep={}, % Uncomment if no comma needed between city and postcode
+    state={Nairobi},
+    country={Kenya}}
+
+
+% For a title note without a number/mark
+
+
+% Here goes the abstract
+\begin{abstract}
+Consumers and financial institutions continue to suffer economic losses occasioned by financial fraud in digital payment systems, with developing economies bearing the brunt of these schemes. Recently, researchers have increasingly applied machine learning techniques to detect financial fraud. However, limited attention has been given to the operational constraints and data characteristics of regions with severe class imbalance. This study conducts a comparative evaluation of supervised machine learning models—LightGBM, XGBoost, Random Forest, Logistic Regression, and Linear Support Vector Machine (LinearSVM)—for the detection of fraudulent mobile money transactions in East Africa.
+Using the Cross-Industry Standard Process for Data Mining (CRISP-DM) framework, the models were assessed on a real-world dataset containing 95,662 transactions, with a 1:495 imbalance ratio. Our analysis incorporated data preprocessing, exploratory analysis, feature engineering, and cost-sensitive learning through class weighting. Model performance was evaluated using highly imbalanced data, appropriate metrics such as precision, recall balance, and PR-AUC.
+Empirical results indicate that LightGBM achieved superior overall performance, recording the highest precision–recall balance and PR-AUC. Interestingly,  Random Forest provided impressive results, almost rivalling LightGBM. In contrast, XGBoost underperformed relative to its commonly reported dominance in fraud detection literature, emphasising the need for domain- and data-specific model evaluation. On the other hand, Logistic Regression and LinearSVC provided reasonable baseline performance, supporting their inclusion to serve as interpretable benchmarks. From these findings, it is important to align algorithm selection and evaluation metrics with real-world deployment conditions, rather than accounting for generalised results from similar studies.
+\end{abstract}
+
+\begin{keywords}
+fraud detection \sep machine learning \sep LightGBM \sep XGBoost \sep deep learning \sep imbalanced data \sep financial transactions \sep CRISP-DM
+\end{keywords}
+
+
+\maketitle
+
+\section{Introduction}
+
+The rapid adoption of digital financial solutions continues to redefine economic activity across many developing countries, with mobile money platforms serving as a cornerstone of financial inclusion \cite{Yashika}. Worldwide, mobile money systems supported over 1.2 billion registered accounts by 2024, with Sub-Saharan Africa accounting for the largest share of adoption \cite{GSMA_SOTIR_2024}. 
+
+Despite these benefits, the fast expansion of mobile money ecosystems has also expanded the attack points for financial fraud, resulting in considerable economic losses \cite{Sariat}. In 2023 alone, Britain suffered fraud losses up to £1.17 billion, mainly resulting from authorised push payment scams \cite{ukfinance2024annual}. At the global level, annual losses attributed to payment fraud are expected to exceed \$200 billion \cite{mckinsey2023future}. Even as economies recover from billions of dollars lost to financial fraud, broader estimates from the International Monetary Fund project continued growth of cybercrime and financial fraud in the coming years \cite{IMF23}. In Kenya, 25.9\% of mobile wallet subscribers reported experiencing financial losses due to digital fraud in 2023 \cite{nationalke2023cybersecurity}. Collectively, these figures underscore the importance of developing robust fraud detection mechanisms to maintain user trust and ensure the long-term viability of mobile money services \cite{Lu25}.
+
+Detecting fraud in mobile money transactions presents a set of challenges that differ markedly from those encountered in traditional financial systems \cite{Souran}. A primary difficulty arises from extreme class imbalance, where fraudulent transactions represent only a small fraction of overall activity, limiting the ability of standard machine learning models to learn meaningful fraud patterns \cite{Lu25, imbalanced1, imbalanced2}. In addition, fraudsters continue to refine their strategies by employing approaches such as social engineering, SIM swapping, and deepfake-based impersonation to bypass current controls \cite{Sariat, Riham, papasavva}. Furthermore, strict latency constraints in the operational environment complicate detection, as mobile money platforms must evaluate large volumes of transactions in real time \cite{liu, Arzu}. Modern payment infrastructures require an almost instantaneous aaaaaassessment of fraudof fraudof fraudof fraudof fraudof fraud; therefore, traditional batch-oriented approaches are insufficient \cite{mckinsey2023future}. The adoption of stream-processing architectures and machine learning models is a viable option capable of millisecond-level inference on live data streams \cite{aws2024fraud, liu}.
+
+Conventional rule-based fraud detection systems struggle to adapt to evolving fraud patterns and frequently generate high false positive rates, leading to unnecessary transaction declines and degraded user experience, thus making them ineffective \cite{Arzu, Lokanan2023predicting, Lu25}. Consequently, there is a growing demand for adaptive and data-driven fraud detection approaches that can capture complex behavioural patterns, generalise to previously unseen fraud types, and operate reliably under severe class imbalance \cite{Theodorakopoulos2025BigData}. Emerging techniques, including graph-based and graph neural network approaches, have shown promise by modelling relational structures within transactional data and identifying anomalous behaviour in highly skewed datasets \cite{cheng2025graph}.
+
+Against this backdrop, this aims to develop and evaluate a machine learning-based fraud detection framework for mobile money transactions using the Cross-Industry Standard Process for Data Mining (CRISP-DM) methodology. We begin by examining the characteristics of mobile money transaction data across multiple product categories and channels. Secondly, we investigate and implement strategies for addressing severe class imbalance. Subsequently, several supervised learning algorithms, Logistic Regression, Linear Support Vector Machine (LinearSVM), Random Forest, XGBoost, and LightGBM, are implemented and systematically compared using evaluation metrics appropriate for imbalanced datasets. Finally, the study discusses practical considerations associated with deploying fraud detection models in real-world mobile money environments.
+
+
+\section{Literature Review}
+
+\subsection{Mobile Money and Fintech Security}
+
+Mobile money services have played a transformative role in advancing financial inclusion across developing economies, where mobile money services (MMS) have emerged as a critical driver of financial inclusion \cite{Sariat, Lokanan2023predicting, Hanbali2025MobileMoneyFraud}. Despite these benefits, the rapid adoption of mobile money platforms has expanded the attack surface for financial fraud. The convenience and ubiquity of mobile transactions have been accompanied by a corresponding rise in fraudulent activities, resulting in significant financial losses and erosion of user trust \cite{Souran, Riham}.
+
+Empirical research on mobile money fraud in East Africa has expanded in recent years, offering valuable regional insights. Studies leveraging real mobile money transaction datasets have demonstrated that machine learning techniques can effectively identify fraudulent behaviour in these contexts \cite{Azamuke2025Financial, Lokanan2023predicting}. Moreover,  analyses by \cite{botchey2020mobile}  showed that supervised learning models, including support vector machines and gradient-boosted trees, are capable of capturing fraud patterns specific to mobile money systems in Sub-Saharan Africa. While these studies establish the feasibility of data-driven fraud detection, their reliance on static datasets or short observation periods limits their ability to account for concept drift and the ever-evolving nature of fraud in the ecosystem.
+
+A key limitation of the existing body of fraud detection literature is its predominant focus on credit card transactions in developed economies. Findings from these settings often do not translate directly to mobile money environments in East Africa, where transaction dynamics, user behaviour, and fraud types differ substantially \cite{Mambina, Neza2022EMoneySecurity}. These contextual differences necessitate domain-specific research grounded in real mobile money transaction data, with methodologies tailored to the operational realities and constraints of the region.
+
+\subsection{Machine Learning Approaches to Fraud Detection}
+\subsubsection{Traditional Machine Learning Algorithms}
+
+Traditional machine learning techniques have been widely adopted to address the limitations of rule-based fraud detection systems, especially their inability to adapt to evolving fraud patterns and severe class imbalance \cite{Sariat}. Notably, Random Forest is robust and has the capacity to model nonlinear relationships and therefore continues to demonstrate strong performance in financial fraud detection \cite{Afriyie2023Supervised, Mambina}. Recent studies by \ cite {kumar2024enhanced, sundaravadivel2025optimizing} show that hyperparameter-optimised Random Forest models achieve reliable fraud detection performance in imbalanced transaction datasets.
+
+Support Vector Machines (SVMs) have also been applied to fraud detection, with effectiveness largely dependent on kernel selection and data characteristics. Comparative studies conducted by \cite{botchey} indicate that SVMs generally underperform ensemble-based methods when faced with extreme class imbalance and complex feature dependencies. Furthermore, the practical utility of supervised traditional machine learning models is constrained by their reliance on high-quality labelled data, which is often scarce or noisy in operational mobile money environments due to inconsistent verification and reporting standards.
+
+\subsubsection{Gradient Boosting Methods: XGBoost and LightGBM}
+
+Gradient boosting algorithms continue to conquer contemporary fraud detection research due to their strong predictive performance, scalability, and ability to natively handle class imbalance \cite{Theodorakopoulos2025BigData, Sariat}. Supported by efficient tree construction, regularisation, and robustness to sparse features, several studies settle for XGBoost as the most suitable digital payment fraud detector \cite{hajek2022fraud, azamuke2022scenario}. Some studies report high Matthews Correlation Coefficient and recall values, making LightGBM suitable for real-time fraud screening.
+
+However,  a substantial portion of reported XGBoost performance is derived from synthetic or simulated datasets, raising concerns regarding generalizability to noisy, real-world mobile money environments where feature distributions and fraud behaviours are less stable. Empirical evidence suggests that performance gains observed under controlled conditions may degrade when deployed on operational transaction logs with severe label noise and concept drift.
+
+LightGBM has gained increasing attention due to its computational efficiency and effectiveness on large-scale, highly imbalanced datasets. By employing histogram-based learning and leaf-wise tree growth, LightGBM achieves faster training and lower inference latency while maintaining competitive predictive accuracy \cite{zhao2024enhancing}. Recent studies demonstrate that LightGBM, both as a standalone model and within ensemble configurations, delivers substantial precision–recall trade-offs in financial fraud detection tasks \cite{ramesh2025stacked, zheng2024advanced1}. These characteristics make LightGBM particularly well-suited for real-time mobile money fraud detection in resource-constrained deployment environments.
+
+
+
+\subsubsection{ Deep Learning and Neural Network Approaches}
+
+Deep learning models have been increasingly applied to fraud detection due to their ability to automatically learn complex, nonlinear feature representations from large-scale transaction data \cite{Hanbali2025MobileMoneyFraud, Chen2025DeepLearning}. Sequential architectures such as Recurrent Neural Networks (RNNs) and Long Short-Term Memory (LSTM) networks are particularly effective in modelling temporal dependencies within transaction histories, enabling improved detection of evolving fraud patterns \cite{Kandi2025Enhancing, Sariat}. Hybrid neural approaches combining multiple architectures have further demonstrated enhanced predictive capability in financial fraud detection tasks \cite{AlKhasawneh2025Hybrid}.
+
+Recent work has extended deep learning applications to mobile money and digital payment contexts. Advanced models integrating convolutional and recurrent layers, including CNN–BiLSTM and adversarial autoencoder frameworks, have achieved high detection performance by capturing both spatial and sequential fraud characteristics \cite{silva2021multiclass, yussif2025advanced}. Attention-based mechanisms have also shown promise by improving the model's focus on salient fraud indicators, thereby enhancing minority-class detection \cite{dhasaratham2024attention}.
+
+
+Significant operational challenges persist in the deployment of deep learning models in mobile money ecosystems in spite of the advancements. Often,  neural architectures incur high computational and inference costs, which may be incompatible with low-latency transaction processing requirements lacking in developing markets \cite{Riham, jeyachandran2024leveraging}. As a result, the applicability of DL in real-time mobile money fraud detection remains constrained by resources, scalability, and explainability.
+
+
+\subsubsection{ Hybrid and Ensemble Approaches}
+Recently,  research increasingly demonstrates that hybrid and ensemble models outperform individual classifiers by combining the strengths of multiple models. Hybrid models count on diverse inductive biases to improve noise robustness and enhance minority-class detection \cite{shinde2021detecting}. However,  hybrid ensembles suffer from increased computational overhead and reduced model interpretability, which may outweigh marginal improvements in predictive metrics. 
+
+\subsection{Addressing Class Imbalance in Fraud Detection}
+A major methodological limitation of Fraud detection algorithms is the class imbalance, which often leads to majority class bias. As a result, reliability and robustness are affected, necessitating advanced resampling or weighting techniques \cite{aldahasi2024optimizing, doddamani2024money, botchey2022predicting}.
+
+\subsubsection{ Oversampling Techniques: SMOTE and Variants}
+Extensive recent research has been carried out on SMOTE (Synthetic Minority Over-sampling Technique). Results show significant enhancement of models' ability to detect fraudulent instances \cite{gupta2025realtime}. In SMOTE, synthetic minority class samples are generated based on feature space similarities of nearest neighbours \cite{ahmed2025credit}. 
+
+\cite{Bonde2025Improving} demonstrated that SMOTE-ENN (SMOTE-Edited Nearest Neighbour), which combines oversampling with noise reduction. SMOTE-ENN is consistent and stable with better precision-recall balance when combined with ensemble deep learning models \cite{ahmed2025credit}. \cite{zheng2024advanced2, zheng2024advanced1} integrated SMOTE with XGBoost, CatBoost, and LightGBM in advanced payment security systems, achieving exceptional results in highly imbalanced fraud detection scenarios. However,{ahmed2025credit} failed to account for the risk of identifying synthetic artefacts rather than genuine fraud patterns in their use of SMOTE. On the other hand, approaches like class weighting preserve the integrity of the original features.
+
+
+\subsubsection{Algorithm-Level and Threshold Optimisation Approaches}
+
+Additionally, model-centric techniques modify how learning algorithms penalise misclassification, leading to better imbalance handling. For instance, \cite{chen2022imbalanced, Zhao2024Improved} note that Cost-sensitive learning assigns higher weights to minority-class instances, for models to prioritise fraud detection during training rather than accuracy.
+
+Furthermore, in severe class imbalances,  Focal loss, commonly used in deep learning models, has been used to concentrate learning on hard-to-detect fraudulent cases \cite{albalawi2025enhancing}. According to \cite{ Zhao2024Improved}, researchers must use traditional evaluation metrics like accuracy with caution, as they can be misleading. \cite{aldahasi2024optimizing, albalawi2025enhancing, Zhao2024Improved} advocate for precision–recall–based metrics as better indicators of fraud detection effectiveness \cite{aldahasi2024optimizing, albalawi2025enhancing, Zhao2024Improved}.
+ 
+
+\subsection{Real-Time Fraud Detection and Deployment Considerations}
+
+In addition to model accuracy, deployment of fraud detectors introduces other challenges. To demonstrate low-latency prediction, \cite{Riham}  and \cite{gupta2025realtime} developed ML models to perform rapid analysis of mobile fraud, highlighting infrastructure requirements for production deployment. Nevertheless, both fail to guide the adaptation of such systems in new markets like Kenya, where network instability remains prevalent.
+
+\cite{Theodorakopoulos2025BigData} tout the use of distributed computing platforms, such as PySpark, as solutions to scalability and computational efficiency of fraud detection systems. \cite{Theodorakopoulos2025BigData} note that these platforms reduce latency by parallel processing and in-memory computation. \cite{jeyachandran2024leveraging} demonstrated practical implementations of real-time fraud detection in digital payments. Nevertheless, these works rarely quantify the operational trade-offs between sophisticated distributed architectures, the cost and skills to maintain them in production, which may limit their direct applicability for many mobile money operators.
+
+Pattern analysis and behavioural approaches have emerged as complementary strategies. \cite{cochrane2021pattern} developed pattern analysis methods for transaction fraud detection, showing that temporal and sequential patterns enhance static feature-based detection. \cite{saadah2020classification} classified customer actions on digital money transactions using Probabilistic Neural Networks (PNN), demonstrating the value of user behaviour modelling. However, most of these behaviour-based approaches are evaluated on relatively short time horizons and controlled datasets, leaving open questions about their robustness and adversarial adaptation in real-world mobile money ecosystems.
+
+
+\subsection{Research Gap and Study Positioning}
+
+Although substantial strides have been made in fraud detection research, the majority of existing studies focus on credit card transactions and banking systems, limiting their applicability to mobile money platforms in East Africa \cite{Raturi2024Comparative, Afriyie2023Supervised}. Transaction behaviour, regulatory structures, and fraud types in mobile payments differ fundamentally from those in credit card fraud. Studies like \cite{Azamuke2025Financial, Lokanan2023predicting, botchey2020mobile, yussif2025advanced} have begun to address these gaps,  but studies using African transaction data remain scarce.
+
+Most of these studies fail to capture noise and important features as they rely on synthetic datasets \cite{Sariat, botchey2022predicting}. Consequently, Models trained on such data are likely to exhibit strong offline performance yet generalise poorly in real data. Moreover, the reviewed studies provide limited transparency regarding data provenance and system constraints, thus hindering practical adoption \cite{emran2024big}. This study benchmarks multiple machine learning algorithms on real mobile money transaction data from Kenya. The study accounts for extreme class imbalance and deployment constraints within a CRISP-DM framework, thereby bridging the identified gaps.
+
+
+\section{Methodology}
+
+This study follows the CRSIP-DM approach, a structured and iterative framework widely adopted for applied machine learning projects. Methodological rigour, transparency, and reproducibility are guaranteed under this approach throughout the fraud detection lifecycle.
+
+\subsection{Business Understanding}
+
+Our research endeavours to maximise anomaly detection and maintain acceptable false positives by developing a reliable fraud detection system for mobile money transactions. We prioritize user experience by minimizing financial losses and operational disruption.
+
+\subsection{Data Understanding}
+
+\subsubsection{Dataset Overview}
+
+This study makes use of 95,662 anonymised mobile money transactions collected from a Kenyan mobile money platform for four months. To comply with data protection and privacy regulations, all personal identifiers were expunged. Lastly, each entry represents an individual transaction, which is labelled as either legitimate or fraudulent for supervised ML.
+
+\subsubsection{Feature Description}
+
+There are 21  features in the dataset capturing transactional, categorical, numerical, and temporal characteristics relevant to fraud detection. Details such as service provider information and product details are in categorical form, while attributes like amount and value are of a numerical nature.
+
+From these features, we get a collective view of transaction behaviour, therefore allowing our models to capture various patterns and risks associated with different variables.
+
+\subsubsection{Class Distribution}
+
+ The dataset depicts extreme data imbalance, with  95,469 (99.798\%) being legitimate, while only 193 (0.202\%) are labelled as fraudulent. A dataset with such extreme ratios poses a significant challenge for fraud detection models.   Standard classification models can fail to detect fraud and achieve high accuracies by 99\%. Addressing this skew is therefore central to the modelling strategy adopted in this study.
+
+\subsection{Data Preparation}
+
+\subsubsection{Data Quality Assessment}
+
+Being a system-generated log, the dataset had no missing or duplicate values. Temporal features were extracted from \texttt{TransactionStartTime}, including hour, day, month, weekday, and date components.
+
+\subsubsection{Outlier Detection and Treatment}
+
+  \begin{tcolorbox}[
+    title={IQR Outlier Detection Algorithm},
+    colback=blue!5!white,
+    colframe=blue!75!black,
+    fonttitle=\bfseries
+]
+\renewcommand{\arraystretch}{1.0}
+\begin{tabular}{lp{0.8\linewidth}}
+\textbf{Step 1:} & Calculate quartiles: \\
+& $Q1 = 25^{\text{th}}$ percentile, $Q3 = 75^{\text{th}}$ percentile \\
+\\
+\textbf{Step 2:} & Compute Interquartile Range: \\
+& $IQR = Q3 - Q1$ \\
+\\
+\textbf{Step 3:} & Determine outlier boundaries: \\
+& Lower bound = $Q1 - 1.5 \times IQR$ \\
+& Upper bound = $Q3 + 1.5 \times IQR$ \\
+\\
+\textbf{Step 4:} & Identify outliers: \\
+& Data point $x$ is an outlier if $x < \text{Lower bound}$ OR $x > \text{Upper bound}$
+\end{tabular}
+\end{tcolorbox}
+
+Using the Interquartile Range (IQR) method, Outliers identified in \texttt{Amount} and \texttt{value} were retained as potential fraud indicators. Subsequently, we applied robust scaling to mitigate their influence.
+
+
+\subsubsection{Feature Engineering}
+
+We created temporal features from \texttt{TransactionStartTime} to capture time-based fraud patterns. We then used these features to enable the model to learn temporal fraud patterns identified in exploratory analysis.
+
+\subsection{Exploratory Data Analysis}
+
+\subsubsection{Temporal Fraud Patterns}
+
+From the analysis, we discovered distinct temporal patterns in fraud occurrence, with higher rates during night hours and certain days. Fraudulent transactions also exhibited different amount distributions compared to legitimate ones. Product categories and channels showed varying fraud susceptibility, with financial services appearing the most susceptible.
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.32\textwidth}
+\centering
+\includegraphics[width=\textwidth]{./temporal1.png}
+\caption{Hourly Trend}
+\end{subfigure}
+\begin{subfigure}{0.32\textwidth}
+\centering
+\includegraphics[width=\textwidth]{./temporal2.png}
+\caption{Daily Trend}
+\end{subfigure}
+\caption{Temporal analysis of fraud occurrence.}
+\label{fig:grid}
+\end{figure}
+
+\subsubsection{Transaction Amount Analysis}
+
+We compared distributions of \texttt{Amount} and \texttt{Value} between fraud and legitimate transactions. From our analysis, higher amounts were more susceptible to fraud compared to lower amounts.
+These statistical differences from our findings validate \texttt{Amount} and \texttt{Value} as predictive features.
+
+\subsection{Data Preprocessing for Modelling}
+
+\subsubsection{Feature Selection}
+
+Feature selection was guided by exploratory data analysis and domain knowledge to retain variables with predictive relevance while minimising the risk of overfitting. We retained only features that capture transactional value, temporal dynamics, and channel-specific characteristics relevant to fraud detection.
+
+
+\subsubsection{Train-Test Split}
+
+The dataset was split into training and testing subsets using an 80:20 split. Stratified sampling was applied to preserve the original class distribution in both sets, ensuring that the minority fraud class was adequately represented during training and evaluation. The training subset was further used for cross-validation during model development.
+
+\subsubsection{Feature Scaling}
+
+Numerical features were standardised using StandardScaler to achieve a zero mean and unit variance. For each feature value $x$ with mean $\mu$ and standard deviation $\sigma$, the standardized value $z$ is computed as:
+\begin{equation}
+z = \frac{x - \mu}{\sigma}
+\end{equation}
+
+This transformation prevents features with larger numeric ranges from dominating the learning process and is particularly important for scale-sensitive algorithms such as Logistic Regression and Support Vector Machines.
+
+\subsubsection{Handling Class Imbalance}
+
+To address the extreme fraud-to-legitimate ratio of approximately 1:495, a class weighting strategy was adopted as the primary imbalance mitigation approach. This method assigns higher misclassification penalties to minority-class observations, encouraging the learning algorithm to prioritise fraud detection. For class $i$, the weight $w_i$ is computed as:
+\begin{equation}
+w_j = \frac{N}{k \times n_j}
+\end{equation}
+
+where $N$ denotes the total number of samples, $k$ is the number of classes, and $n_j$ is the number of samples belonging to class $j$. 
+Under this formulation, the fraud class receives substantially higher weight than the legitimate class, effectively balancing the loss contribution during training.
+
+Class weighting was preferred over synthetic oversampling techniques such as SMOTE for three reasons. First, with extreme imbalance, oversampling would require generating a large number of synthetic fraud instances, increasing the risk of learning artificial patterns. Second, class weighting preserves the original data distribution by modifying the learning objective rather than the data itself. Third, tree-based ensemble models, including Random Forest, XGBoost, and LightGBM, natively support weighted loss functions and handle this strategy effectively.
+
+As a complementary measure, decision threshold optimisation was performed by analysing precision–recall trade-offs, allowing the classification threshold to be adjusted in line with operational requirements for fraud detection sensitivity and false positive tolerance.
+
+\subsection{Model Development}
+
+This study evaluates multiple supervised machine learning algorithms to benchmark their effectiveness in detecting fraudulent mobile money transactions under conditions of extreme class imbalance. The selected models represent a range of linear, tree-based, and ensemble learning paradigms, allowing for a balanced comparison of predictive performance, robustness, and interpretability.
+
+\subsubsection{Algorithm Selection}
+
+\textbf{1. Logistic Regression} was implemented as a baseline classifier due to its simplicity and interpretability. The model estimates the probability of fraud using a linear combination of input features passed through a logistic function. To mitigate class imbalance, class weights were incorporated into the loss function, ensuring that misclassification of fraudulent transactions incurred higher penalties during optimization.
+\begin{equation}
+P(y=1|\mathbf{x}) = \frac{1}{1 + e^{-(\beta_0 + \boldsymbol{\beta}^T \mathbf{x})}}
+\end{equation}
+where $\mathbf{x}$ is the feature vector, $\beta_0$ is the intercept, and $\boldsymbol{\beta}$ represents feature coefficients. 
+
+
+\textbf{2. Random Forest} is an ensemble learning method that constructs multiple decision trees using bootstrap sampling and random feature selection. By aggregating predictions across trees, the model reduces variance and improves generalisation. In this study, class weighting was applied at the tree level to bias splits toward minority-class detection, enabling the model to capture nonlinear fraud patterns better.
+\begin{equation}
+\hat{y} = \frac{1}{M} \sum_{m=1}^{M} h_m(\mathbf{x})
+\end{equation}
+where $h_m(\mathbf{x})$ is the prediction of the $m$-th tree. 
+
+\textbf{3. Gradient Boosting Machines} were employed due to their strong empirical performance in fraud detection tasks. XGBoost and LightGBM were selected as representative implementations, each optimising decision trees sequentially to correct previous errors. Class imbalance was addressed through weighted loss functions, allowing the models to emphasise fraudulent observations during training. These models are particularly effective at handling heterogeneous feature interactions and sparse fraud signals common in mobile money transaction data.
+\begin{equation}
+\mathcal{L} = \sum_{i=1}^{n} \ell(y_i, \hat{y}_i) + \sum_{k=1}^{K} \Omega(f_k)
+\end{equation}
+where $\ell$ is the loss function (weighted for class imbalance), $\hat{y}_i$ is the predicted value, and $\Omega(f_k)$ is the regularisation term penalising model complexity.
+
+\textbf{4. Linear Support Vector Machine (Linear SVM) } was included to assess the effectiveness of margin-based classifiers in highly imbalanced settings. A radial basis function (RBF) kernel was used to capture nonlinear decision boundaries. Given the sensitivity of SVMs to feature scaling and class imbalance, standardised inputs and class weighting were applied to improve minority-class detection.
+
+\begin{equation}
+\min_{\mathbf{w},b} \left( \frac{1}{2}||\mathbf{w}||^2 + C \sum_{i=1}^{n} \max(0, 1 - y_i(\mathbf{w}^\top \mathbf{x}_i + b)) \right)
+\end{equation}
+
+where $\mathbf{w}$ is the weight vector defining the separating hyperplane, $b$ is the bias term, $y_i \in \{-1, +1\}$ are the class labels, and $C$ is a regularization parameter. 
+
+
+\subsubsection{Model Training}
+
+We trained each algorithm on the class-weighted training data using Stratified Cross-Validation of 5 folds to maintain class distribution. Hyperparameters were tuned using Grid Search within defined ranges. For Logistic Regression, we optimised the inverse regularisation strength ($C$). Random Forest was configured with class weighting, 100 estimators, and max depth tuned between 10 and 50. For XGBoost and LightGBM, we utilised the \texttt{scale\_pos\_weight} parameter (set to $\approx 495$) to explicitly handle class imbalance, while optimising learning rates (0.01-0.1) and tree depth to prevent overfitting on the minority class.
+
+\subsection{Model Evaluation}
+
+Model performance was assessed using evaluation metrics appropriate for highly imbalanced fraud detection tasks. Instead of overall accuracy, precision, recall, F1-score, and the area under the precision–recall curve (PR-AUC) were used to evaluate minority-class performance. Recall was prioritised due to the high cost of undetected fraud, while precision was monitored to limit excessive false positives that could disrupt legitimate users and operational workflows.
+
+ROC-AUC was reported for comparability with prior studies, although its limitations under extreme class imbalance were acknowledged. Model robustness was further examined through precision–recall curve analysis across varying decision thresholds, enabling selection of operating points aligned with practical risk tolerance. Confusion matrices were used to provide transparency into classification outcomes, and all evaluations were conducted on a held-out test set to ensure an unbiased assessment of generalisation performance under realistic deployment conditions.
+
+
+\subsection{Deployment Considerations}
+
+Discussed practical aspects for production deployment:
+\begin{itemize}
+    \item \textbf{Real-time Scoring}: Low-latency prediction requirements
+    \item \textbf{Model Monitoring}: Tracking performance degradation and fraud pattern drift
+    \item \textbf{Periodic Retraining}: Updating models with new fraud patterns
+    \item \textbf{Explainability}: Providing justification for fraud alerts
+    \item \textbf{Integration}: API design for system integration
+\end{itemize}
+
+\subsection{Deployment Prototype: Streamlit Application}
+
+To validate the practical feasibility of the proposed fraud detection framework, we developed an interactive web application using Streamlit. This prototype serves as a proof-of-concept for real-time fraud scoring and analyst review.
+
+\textbf{Key Features}:
+\begin{itemize}
+    \item \textbf{Real-time Inference}: Loads the trained LightGBM model and scaler artefacts to generate fraud probability scores for new transactions instantly.
+    \item \textbf{Feature Consistency}: Implements an identical feature engineering pipeline to the training phase, ensuring consistent transformation of raw transaction data (e.g., temporal features, amount ratios) during inference.
+    \item \textbf{Analyst Interface}: Provides a dashboard for visualising transaction risk, including a "Fraud Probability Gauge" and key risk factors, enabling fraud analysts to make informed decisions.
+    \item \textbf{Batch Processing}: Supports bulk upload of transaction logs for retrospective analysis, mimicking the batch processing workflows used in production environments.
+\end{itemize}
+
+This application demonstrates that the complex feature engineering and model inference steps can be executed with low latency, supporting the "Real-time Scoring" requirement outlined in the deployment considerations.
+
+
+
+
+
+
+
+
+
+
+\appendix
+
+
+\printcredits
+
+%% Loading bibliography style file
+% \bibliographystyle{model1-num-names}
+\bibliographystyle{cas-model2-names}
+
+% Loading bibliography database
+\bibliography{references.bib}
+
+
+
+\end{document}
+

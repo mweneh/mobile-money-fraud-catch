@@ -1,0 +1,76 @@
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    node distance=1.5cm and 2cm,
+    every node/.style={align=center},
+    process/.style={rectangle, draw=black, fill=blue!10, thick, minimum width=3.5cm, minimum height=1cm, rounded corners},
+    decision/.style={diamond, draw=black, fill=green!10, thick, aspect=2, minimum width=3cm, minimum height=1cm},
+    io/.style={trapezium, trapezium left angle=70, trapezium right angle=110, draw=black, fill=orange!10, thick, minimum width=3cm, minimum height=1cm},
+    arrow/.style={thick, ->, >=stealth}
+]
+
+    % Phase 1: Data Processing
+    \node (raw) [io] {Raw Transaction Data\\(95,662 entries)};
+    \node (clean) [process, below=1cm of raw] {Data Quality Check\\(No Nulls/Dups)};
+    \node (fe) [process, below=1cm of clean] {Feature Engineering\\(Temporal, Ratios, Log)};
+    \node (scale) [process, below=1cm of fe] {Standard Scaling\\(For Linear Models)};
+
+    % Phase 2: Split & Balance
+    \node (split) [process, right=2cm of clean] {Stratified Split\\(80\% Train / 20\% Val)};
+    
+    \node (imbalance) [decision, right=2cm of fe] {Imbalance Strategy};
+    
+    \node (weight) [process, above right=0.5cm and 2cm of imbalance] {Class Weighting\\(Cost-Sensitive)};
+    \node (smote) [process, below right=0.5cm and 2cm of imbalance] {SMOTE\\(Oversampling)};
+
+    % Phase 3: Modeling
+    \node (models) [process, right=3.5cm of imbalance, minimum height=3cm, fill=red!10] {
+        \textbf{Model Training}\\
+        \begin{itemize}
+            \item LightGBM
+            \item Random Forest
+            \item XGBoost
+            \item LinearSVC
+            \item Logistic Regression
+        \end{itemize}
+    };
+
+    % Phase 4: Evaluation
+    \node (eval) [process, below=2cm of models] {Performance Evaluation\\(PR-AUC, F1, Recall)};
+    \node (optimize) [process, left=2cm of eval] {Threshold Optimization\\(Precision-Recall Curve)};
+    \node (final) [io, left=2cm of optimize] {Final Predictions\\(Optimal Threshold)};
+
+    % Connections
+    \draw [arrow] (raw) -- (clean);
+    \draw [arrow] (clean) -- (fe);
+    \draw [arrow] (fe) -- (split); % Conceptual link: Prep -> Split
+    % Actually split happens before scaling usually, but diagrammatically this flows well. 
+    % Let's clarify flow: Raw -> Prep -> Split -> Imbalance -> Model
+    
+    % Re-routing for logical flow
+    \draw [arrow] (fe) -- (scale);
+    \draw [arrow] (clean) -- (split);
+    \draw [arrow] (split) -- (imbalance);
+    
+    \draw [arrow] (imbalance) -- node[anchor=south, sloped] {Baseline} (weight);
+    \draw [arrow] (imbalance) -- node[anchor=north, sloped] {Comparative} (smote);
+    
+    \draw [arrow] (weight) -- (models);
+    \draw [arrow] (smote) -- (models);
+    
+    \draw [arrow] (models) -- (eval);
+    \draw [arrow] (eval) -- (optimize);
+    \draw [arrow] (optimize) -- (final);
+
+    % Background Boxes
+    \begin{scope}[on background layer]
+        \node [draw=black!20, dashed, fit=(raw) (scale), label=above:\textbf{P1: Data Processing}] {};
+        \node [draw=black!20, dashed, fit=(split) (weight) (smote), label=above:\textbf{P2: Experimental Setup}] {};
+    \end{scope}
+
+\end{tikzpicture}
+}
+\caption{Methodological Workflow: From Data Ingestion to Model Optimization. The framework adopts a CRISP-DM aligned approach featuring parallel imbalance handling strategies.}
+\label{fig:methodology_workflow}
+\end{figure}
