@@ -1,5 +1,17 @@
-\begin{figure}[htbp]
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
+\usepackage{graphicx}
+
+\begin{document}
+
+\par\noindent
+\refstepcounter{figure}
+\begin{center}
+\begin{minipage}{\textwidth}
 \centering
+
 \resizebox{\textwidth}{!}{%
 \begin{tikzpicture}[
     node distance=1.5cm and 2cm,
@@ -18,13 +30,13 @@
 
     % Phase 2: Split & Balance
     \node (split) [process, right=2cm of clean] {Stratified Split\\(80\% Train / 20\% Val)};
-    
     \node (imbalance) [decision, right=2cm of fe] {Imbalance Strategy};
-    
+
     \node (weight) [process, above right=0.5cm and 2cm of imbalance] {Class Weighting\\(Cost-Sensitive)};
     \node (smote) [process, below right=0.5cm and 2cm of imbalance] {SMOTE\\(Oversampling)};
 
     % Phase 3: Modeling
+    % Added text width to allow itemize environment
     \node (models) [process, right=3.5cm of imbalance, minimum height=3cm, fill=red!10, text width=4cm] {
         \textbf{Model Training}\\
         \begin{itemize}
@@ -44,21 +56,16 @@
     % Connections
     \draw [arrow] (raw) -- (clean);
     \draw [arrow] (clean) -- (fe);
-    \draw [arrow] (fe) -- (split); % Conceptual link: Prep -> Split
-    % Actually split happens before scaling usually, but diagrammatically this flows well. 
-    % Let's clarify flow: Raw -> Prep -> Split -> Imbalance -> Model
-    
-    % Re-routing for logical flow
     \draw [arrow] (fe) -- (scale);
     \draw [arrow] (clean) -- (split);
     \draw [arrow] (split) -- (imbalance);
-    
+
     \draw [arrow] (imbalance) -- node[anchor=south, sloped] {Baseline} (weight);
     \draw [arrow] (imbalance) -- node[anchor=north, sloped] {Comparative} (smote);
-    
+
     \draw [arrow] (weight) -- (models);
     \draw [arrow] (smote) -- (models);
-    
+
     \draw [arrow] (models) -- (eval);
     \draw [arrow] (eval) -- (optimize);
     \draw [arrow] (optimize) -- (final);
@@ -71,6 +78,13 @@
 
 \end{tikzpicture}
 }
-\caption{Methodological Workflow: From Data Ingestion to Model Optimization. The framework adopts a CRISP-DM aligned approach featuring parallel imbalance handling strategies.}
+
+\vspace{0.6em}
+\textbf{Figure~\thefigure: Methodological Workflow from Data Ingestion to Model Optimisation}\par
+\small The framework follows a CRISP-DM–aligned pipeline, incorporating parallel imbalance-handling strategies and threshold optimisation for fraud detection.
+
 \label{fig:methodology_workflow}
-\end{figure}
+\end{minipage}
+\end{center}
+
+\end{document}
