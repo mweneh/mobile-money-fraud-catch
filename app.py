@@ -6,6 +6,21 @@ import json
 import plotly.graph_objects as go
 from datetime import datetime
 
+try:
+    import tensorflow as tf
+    from tensorflow.keras.models import load_model
+    from tensorflow.keras import layers
+    from saab_deep_pipeline import SAAABClassifier, LocalDensityScorer, conditional_synthetic_augmentation
+
+    class Sampling(layers.Layer):
+        def call(self, inputs):
+            z_mean, z_log_var = inputs
+            z_log_var = tf.clip_by_value(z_log_var, -4, 4)
+            epsilon   = tf.random.normal(shape=tf.shape(z_mean))
+            return z_mean + tf.exp(0.5 * z_log_var) * epsilon
+except ImportError:
+    st.error("SAAB-DL dependencies missing (tensorflow missing or saab_deep_pipeline not found).")
+    
 # Page Config
 st.set_page_config(
     page_title="Fraud Detection System",
@@ -19,17 +34,25 @@ st.set_page_config(
 def load_assets():
     try:
         model = joblib.load('model.pkl')
+        scaler_raw = joblib.load('scaler_raw.pkl')
+        scaler_vae = joblib.load('scaler_vae.pkl')
+        vae_encoder = load_model('vae_encoder.keras', custom_objects={'Sampling': Sampling}, compile=False)
+        gnn_embeddings = pd.read_pickle('gnn_embeddings.pkl')
+        
         # Load stats with AccountId as index
         stats = pd.read_csv('account_stats_artifact.csv', index_col=0)
         with open('feature_cols.json', 'r') as f:
             features = json.load(f)
+        with open('vae_cols.json', 'r') as f:
+            vae_cols = json.load(f)
         with open('fill_values.json', 'r') as f:
             fill_vals = json.load(f)
-        return model, stats, features, fill_vals
-    except FileNotFoundError as e:
-        return None, None, None, None
+        return model, scaler_raw, scaler_vae, vae_encoder, gnn_embeddings, stats, features, vae_cols, fill_vals
+    except Exception as e:
+        print("Error loading assets:", e)
+        return None, None, None, None, None, None, None, None, None
 
-model, account_stats, feature_cols, fill_values = load_assets()
+model, scaler_raw, scaler_vae, vae_encoder, gnn_embeddings, account_stats, feature_cols, vae_cols, fill_values = load_assets()
 
 def engineer_features(df, account_stats, fill_values):
     # 1. Feature Engineering (Replicating Notebook)
@@ -127,16 +150,39 @@ if mode == "Single Prediction":
                 
                 # Check for feature columns
                 if feature_cols:
-                    # Ensure all feature cols exist
                     for col in feature_cols:
                         if col not in processed_data.columns:
-                            processed_data[col] = 0.0 # Default missing features to 0
-                    
-                    # Select exact columns in order
-                    final_X = processed_data[feature_cols]
+                            processed_data[col] = 0.0
+                    X_raw = processed_data[feature_cols].values
                 else:
-                    final_X = processed_data.select_dtypes(include=[np.number])
-                    st.warning("Feature columns list not found. Using all numeric columns.")
+                    X_raw = processed_data.select_dtypes(include=[np.number]).values
+                    st.warning("Feature columns list not found.")
+                
+                # VAE features
+                if vae_cols:
+                    for col in vae_cols:
+                        if col not in processed_data.columns:
+                            processed_data[col] = 0.0
+                    X_vae_raw = processed_data[vae_cols].values
+                else:
+                    X_vae_raw = np.zeros((len(processed_data), 7))
+                    
+                # GNN embeddings
+                embed_cols = [c for c in gnn_embeddings.columns if c.startswith('GNN_emb_')]
+                gnn_emb = np.zeros((len(processed_data), len(embed_cols)))
+                acc_id = input_data['AccountId'].iloc[0]
+                if acc_id in gnn_embeddings.index:
+                    gnn_emb[0] = gnn_embeddings.loc[acc_id, embed_cols].values
+                    
+                # Scale components
+                X_raw_scaled = scaler_raw.transform(X_raw)
+                X_vae_scaled = scaler_vae.transform(X_vae_raw)
+                
+                # Predict VAE
+                vae_emb, _, _ = vae_encoder.predict(X_vae_scaled, verbose=0)
+                
+                # Fuse
+                final_X = np.concatenate([X_raw_scaled, vae_emb, gnn_emb], axis=1)
                 
                 # Predict
                 prob = model.predict_proba(final_X)[0][1]
